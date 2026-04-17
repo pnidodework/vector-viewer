@@ -1,0 +1,21 @@
+<div class="crop-overlay"
+     *ngIf="active"
+     [style.width.px]="canvasWidth"
+     [style.height.px]="canvasHeight"
+     (mousedown)="onMouseDown($event)"
+     (mousemove)="onMouseMove($event)"
+     (mouseup)="onMouseUp()">
+
+  <div class="crop-selection"
+       *ngIf="hasCrop"
+       [style.left.px]="cropRect.x"
+       [style.top.px]="cropRect.y"
+       [style.width.px]="cropRect.width"
+       [style.height.px]="cropRect.height">
+  </div>
+
+  <div class="crop-actions" *ngIf="hasCrop && !isDragging">
+    <button class="crop-btn apply" (click)="applyCrop()">Apply Crop</button>
+    <button class="crop-btn cancel" (click)="cancel()">Cancel</button>
+  </div>
+</div>

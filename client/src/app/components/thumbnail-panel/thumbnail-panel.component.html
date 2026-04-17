@@ -1,0 +1,38 @@
+<div class="thumbnail-panel" *ngIf="currentFile">
+  <div class="panel-header">
+    <h3>Pages</h3>
+    <span class="page-count">{{ pages.length }}</span>
+  </div>
+
+  <div class="thumbnail-list">
+    <div *ngFor="let page of pages"
+         class="thumbnail-item"
+         [class.active]="page === currentPage"
+         (click)="goToPage(page)">
+      <div class="thumb-wrapper">
+        <!-- PDF: use client-rendered thumbnails -->
+        <ng-container *ngIf="currentFile.type === 'pdf'">
+          <img *ngIf="getPdfThumbUrl(page) as thumbUrl"
+               [src]="thumbUrl"
+               alt="Page {{ page }}"
+               class="thumb-img" />
+          <div *ngIf="!getPdfThumbUrl(page)" class="pdf-thumb-loading">
+            <span>...</span>
+          </div>
+        </ng-container>
+
+        <!-- TIFF/JPG: use server thumbnails -->
+        <img *ngIf="currentFile.type !== 'pdf'"
+             [src]="getThumbnailUrl(page)"
+             alt="Page {{ page }}"
+             class="thumb-img"
+             loading="lazy" />
+      </div>
+      <span class="page-number">{{ page }}</span>
+    </div>
+  </div>
+</div>
+
+<div class="thumbnail-panel empty" *ngIf="!currentFile">
+  <p>No document selected</p>
+</div>

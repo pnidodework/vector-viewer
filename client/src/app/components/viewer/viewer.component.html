@@ -1,0 +1,157 @@
+<div class="viewer-container" *ngIf="currentFile; else noFile">
+  <div class="viewer-wrapper"
+       [style.transform]="transformStyle"
+       [style.filter]="filterStyle"
+       (mousedown)="onMouseDown($event)"
+       (mousemove)="onMouseMove($event)"
+       (mouseup)="onMouseUp($event)"
+       [class.cursor-crosshair]="activeTool !== 'select' && activeTool !== 'pan'"
+       [class.cursor-grab]="activeTool === 'pan' && !isPanning"
+       [class.cursor-grabbing]="isPanning">
+
+    <canvas #viewerCanvas
+            [width]="canvasWidth"
+            [height]="canvasHeight">
+    </canvas>
+
+    <svg #annotationSvg
+         class="annotation-layer"
+         [attr.width]="canvasWidth"
+         [attr.height]="canvasHeight"
+         [attr.viewBox]="'0 0 ' + canvasWidth + ' ' + canvasHeight">
+
+      <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7"
+                refX="10" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#FF0000" />
+        </marker>
+      </defs>
+
+      <!-- Existing annotations -->
+      <g *ngFor="let ann of pageAnnotations; let i = index">
+        <!-- Sticky Note -->
+        <g *ngIf="ann.type === 'stickyNote'" [attr.transform]="getAnnotationTransform(ann)">
+          <rect [attr.width]="ann.data.width || 150"
+                [attr.height]="ann.data.height || 100"
+                [attr.fill]="ann.data.color || '#FFEB3B'"
+                stroke="#666" stroke-width="1" rx="4" opacity="0.9" />
+          <foreignObject [attr.width]="ann.data.width || 150"
+                         [attr.height]="(ann.data.height || 100) - 20" y="4" x="4">
+            <textarea xmlns="http://www.w3.org/1999/xhtml"
+                      class="sticky-textarea"
+                      [value]="ann.data.text || ''"
+                      (blur)="updateStickyNoteText(i, $any($event.target).value)"
+                      placeholder="Type note...">
+            </textarea>
+          </foreignObject>
+          <text [attr.x]="(ann.data.width || 150) - 16" y="14"
+                class="delete-btn" (click)="deleteAnnotation(i)">&#x2715;</text>
+        </g>
+
+        <!-- Stamp -->
+        <g *ngIf="ann.type === 'stamp'" [attr.transform]="getAnnotationTransform(ann)">
+          <rect [attr.width]="ann.data.width || 120" [attr.height]="ann.data.height || 40"
+                fill="none" [attr.stroke]="ann.data.color || '#F44336'"
+                stroke-width="3" rx="4" />
+          <text [attr.x]="(ann.data.width || 120) / 2"
+                [attr.y]="(ann.data.height || 40) / 2 + 5"
+                text-anchor="middle"
+                [attr.fill]="ann.data.color || '#F44336'"
+                font-size="16" font-weight="bold">
+            {{ ann.data.stampType || 'STAMP' }}
+          </text>
+          <text [attr.x]="(ann.data.width || 120) - 12" y="14"
+                class="delete-btn" (click)="deleteAnnotation(i)">&#x2715;</text>
+        </g>
+
+        <!-- Arrow -->
+        <g *ngIf="ann.type === 'arrow'">
+          <line [attr.x1]="ann.data.x" [attr.y1]="ann.data.y"
+                [attr.x2]="ann.data.endX" [attr.y2]="ann.data.endY"
+                [attr.stroke]="ann.data.color || '#FF0000'"
+                [attr.stroke-width]="ann.data.strokeWidth || 2"
+                [attr.marker-end]="getArrowMarkerUrl()" />
+        </g>
+
+        <!-- Line -->
+        <g *ngIf="ann.type === 'line'">
+          <line [attr.x1]="ann.data.x" [attr.y1]="ann.data.y"
+                [attr.x2]="ann.data.endX" [attr.y2]="ann.data.endY"
+                [attr.stroke]="ann.data.color || '#FF0000'"
+                [attr.stroke-width]="ann.data.strokeWidth || 2" />
+        </g>
+
+        <!-- Circle -->
+        <g *ngIf="ann.type === 'circle'">
+          <circle [attr.cx]="ann.data.x" [attr.cy]="ann.data.y"
+                  [attr.r]="ann.data.radius || 50"
+                  fill="none"
+                  [attr.stroke]="ann.data.color || '#FF0000'"
+                  [attr.stroke-width]="ann.data.strokeWidth || 2" />
+        </g>
+
+        <!-- Highlighter -->
+        <g *ngIf="ann.type === 'highlighter'">
+          <path [attr.d]="getSvgPath(ann.data.points || [])"
+                fill="none"
+                [attr.stroke]="ann.data.color || '#FFFF00'"
+                [attr.stroke-width]="ann.data.strokeWidth || 20"
+                [attr.opacity]="ann.data.opacity || 0.3"
+                stroke-linecap="round" stroke-linejoin="round" />
+        </g>
+
+        <!-- Freehand -->
+        <g *ngIf="ann.type === 'freehand'">
+          <path [attr.d]="getSvgPath(ann.data.points || [])"
+                fill="none"
+                [attr.stroke]="ann.data.color || '#FF0000'"
+                [attr.stroke-width]="ann.data.strokeWidth || 2"
+                stroke-linecap="round" stroke-linejoin="round" />
+        </g>
+      </g>
+
+      <!-- Temp annotation while drawing -->
+      <g *ngIf="tempAnnotation">
+        <line *ngIf="tempAnnotation.type === 'arrow' || tempAnnotation.type === 'line'"
+              [attr.x1]="tempAnnotation.data?.x" [attr.y1]="tempAnnotation.data?.y"
+              [attr.x2]="tempAnnotation.data?.endX" [attr.y2]="tempAnnotation.data?.endY"
+              [attr.stroke]="tempAnnotation.data?.color || '#FF0000'"
+              [attr.stroke-width]="tempAnnotation.data?.strokeWidth || 2"
+              [attr.marker-end]="tempAnnotation.type === 'arrow' ? getArrowMarkerUrl() : ''"
+              stroke-dasharray="5,5" />
+
+        <circle *ngIf="tempAnnotation.type === 'circle'"
+                [attr.cx]="tempAnnotation.data?.x" [attr.cy]="tempAnnotation.data?.y"
+                [attr.r]="tempAnnotation.data?.radius || 0"
+                fill="none"
+                [attr.stroke]="tempAnnotation.data?.color || '#FF0000'"
+                [attr.stroke-width]="tempAnnotation.data?.strokeWidth || 2"
+                stroke-dasharray="5,5" />
+
+        <path *ngIf="tempAnnotation.type === 'freehand' || tempAnnotation.type === 'highlighter'"
+              [attr.d]="getSvgPath(tempAnnotation.data?.points || [])"
+              fill="none"
+              [attr.stroke]="tempAnnotation.data?.color || '#FF0000'"
+              [attr.stroke-width]="tempAnnotation.data?.strokeWidth || 2"
+              [attr.opacity]="tempAnnotation.data?.opacity || 1"
+              stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+
+    <app-crop-tool
+      [active]="activeTool === 'crop'"
+      [canvasWidth]="canvasWidth"
+      [canvasHeight]="canvasHeight"
+      (cropApplied)="onCropApplied($event)"
+      (cropCancelled)="onCropCancelled()">
+    </app-crop-tool>
+  </div>
+</div>
+
+<ng-template #noFile>
+  <div class="no-file-message">
+    <div class="no-file-icon">&#128196;</div>
+    <h2>No Document Selected</h2>
+    <p>Select a document from the left panel to begin viewing</p>
+  </div>
+</ng-template>

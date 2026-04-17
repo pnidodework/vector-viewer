@@ -1,0 +1,15 @@
+<div class="image-adjust">
+  <div class="adjust-row">
+    <label>Brightness</label>
+    <input type="range" min="0" max="200" [value]="brightness"
+           (input)="onBrightnessChange($any($event.target).valueAsNumber)" />
+    <span class="value">{{ brightness }}%</span>
+  </div>
+  <div class="adjust-row">
+    <label>Contrast</label>
+    <input type="range" min="0" max="200" [value]="contrast"
+           (input)="onContrastChange($any($event.target).valueAsNumber)" />
+    <span class="value">{{ contrast }}%</span>
+  </div>
+  <button class="reset-btn" (click)="reset()">Reset</button>
+</div>

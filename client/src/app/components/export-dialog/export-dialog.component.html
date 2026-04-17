@@ -1,0 +1,26 @@
+<div class="dialog-overlay" *ngIf="visible" (click)="close()">
+  <div class="dialog" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h3>Export Document</h3>
+      <button class="close-btn" (click)="close()">&#x2715;</button>
+    </div>
+    <div class="dialog-body">
+      <div class="form-group">
+        <label>Format</label>
+        <select [(ngModel)]="format">
+          <option value="pdf">PDF</option>
+          <option value="tiff">TIFF</option>
+          <option value="jpg">JPG</option>
+        </select>
+      </div>
+      <div class="form-group" *ngIf="format !== 'pdf'">
+        <label>Quality: {{ quality }}%</label>
+        <input type="range" min="1" max="100" [(ngModel)]="quality" />
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-secondary" (click)="close()">Cancel</button>
+      <button class="btn btn-primary" (click)="export()">Export</button>
+    </div>
+  </div>
+</div>

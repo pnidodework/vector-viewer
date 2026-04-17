@@ -1,0 +1,26 @@
+[
+  {
+    "_id": "8c93ca49-e7be-4d4d-9658-568dd4b83fed",
+    "filename": "sample-local-pdf.pdf",
+    "displayName": "sample-local-pdf",
+    "type": "pdf",
+    "path": "/Users/prasadnidode/Documents/projects/vector-viewer/server/assets/sample-local-pdf.pdf",
+    "pageCount": 3,
+    "sortOrder": 1,
+    "size": 49672,
+    "createdAt": "2026-04-16T17:10:14.111Z",
+    "updatedAt": "2026-04-16T17:10:14.111Z"
+  },
+  {
+    "_id": "f11fd771-5923-47e2-8ca7-12ddfea5b601",
+    "filename": "file_example_TIFF_1MB.tiff",
+    "displayName": "file_example_TIFF_1MB",
+    "type": "tiff",
+    "path": "/Users/prasadnidode/Documents/projects/vector-viewer/server/assets/file_example_TIFF_1MB.tiff",
+    "pageCount": 1,
+    "sortOrder": 2,
+    "size": 1131930,
+    "createdAt": "2026-04-17T16:08:46.392Z",
+    "updatedAt": "2026-04-17T16:08:46.392Z"
+  }
+]

@@ -1,0 +1,46 @@
+<div class="dialog-overlay" *ngIf="visible" (click)="close()">
+  <div class="dialog" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h3>Cross References</h3>
+      <button class="close-btn" (click)="close()">&#x2715;</button>
+    </div>
+    <div class="dialog-body">
+      <div class="current-file" *ngIf="currentFile">
+        Current: <strong>{{ currentFile.displayName }}</strong>
+      </div>
+
+      <div class="existing-refs">
+        <h4>Linked Documents</h4>
+        <div *ngIf="crossRefs.length === 0" class="no-refs">No cross-references yet.</div>
+        <div *ngFor="let ref of crossRefs" class="ref-item">
+          <span class="ref-name" (click)="navigateToRef(ref)">
+            {{ getLinkedFileName(ref) }}
+          </span>
+          <span class="ref-label" *ngIf="ref.label">{{ ref.label }}</span>
+          <button class="remove-btn" (click)="removeLink(ref._id)">&#x2715;</button>
+        </div>
+      </div>
+
+      <div class="add-ref">
+        <h4>Add Link</h4>
+        <div class="form-row">
+          <select [(ngModel)]="selectedTargetId">
+            <option value="" disabled>Select a document...</option>
+            <option *ngFor="let f of availableFiles" [value]="f._id">
+              {{ f.displayName }} ({{ f.type | uppercase }})
+            </option>
+          </select>
+        </div>
+        <div class="form-row">
+          <input type="text" [(ngModel)]="label" placeholder="Label (optional)" />
+        </div>
+        <button class="btn btn-primary" (click)="addLink()" [disabled]="!selectedTargetId">
+          Add Link
+        </button>
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-secondary" (click)="close()">Close</button>
+    </div>
+  </div>
+</div>

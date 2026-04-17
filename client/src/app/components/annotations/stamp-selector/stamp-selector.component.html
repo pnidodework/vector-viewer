@@ -1,0 +1,17 @@
+<div class="stamp-selector" *ngIf="visible">
+  <div class="stamp-header">
+    <h4>Select Stamp</h4>
+    <button class="close-btn" (click)="close()">&#x2715;</button>
+  </div>
+  <div class="stamp-grid">
+    <button *ngFor="let stamp of standardStamps"
+            class="stamp-item"
+            (click)="selectStamp(stamp)">
+      {{ stamp }}
+    </button>
+  </div>
+  <div class="custom-stamp">
+    <input type="text" [(ngModel)]="customStampText" placeholder="Custom stamp text..." />
+    <button class="add-btn" (click)="addCustomStamp()" [disabled]="!customStampText.trim()">Add</button>
+  </div>
+</div>

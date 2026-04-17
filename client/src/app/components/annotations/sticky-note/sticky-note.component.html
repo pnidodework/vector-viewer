@@ -1,0 +1,22 @@
+<div class="sticky-note" [style.background]="annotation.data.color || '#FFEB3B'">
+  <div class="sticky-header">
+    <button class="color-btn" (click)="toggleColorPicker()" title="Change color">
+      &#127912;
+    </button>
+    <button class="delete-note-btn" (click)="onDelete()" title="Delete">
+      &#x2715;
+    </button>
+  </div>
+  <textarea class="note-text"
+            [value]="annotation.data.text || ''"
+            (blur)="onTextChange($any($event.target).value)"
+            placeholder="Type note...">
+  </textarea>
+
+  <div class="color-picker" *ngIf="showColorPicker">
+    <span *ngFor="let c of colors" class="color-swatch"
+          [style.background]="c"
+          (click)="selectColor(c)">
+    </span>
+  </div>
+</div>

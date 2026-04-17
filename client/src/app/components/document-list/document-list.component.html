@@ -1,0 +1,58 @@
+<div class="document-list-panel">
+  <div class="panel-header">
+    <h3>Documents</h3>
+    <div class="header-actions">
+      <button class="icon-btn" (click)="toggleMultiSelect()"
+              [class.active]="multiSelectMode" title="Multi-select">
+        &#9745;
+      </button>
+      <button class="icon-btn danger" *ngIf="multiSelectMode && selectedIds.size > 0"
+              (click)="deleteSelected()" title="Delete selected">
+        &#128465;
+      </button>
+      <button class="icon-btn" (click)="loadFiles()" title="Refresh">
+        &#8635;
+      </button>
+    </div>
+  </div>
+
+  <div class="doc-nav-buttons">
+    <button class="nav-btn" (click)="navigatePrev()" title="Previous Document">&#9664; Prev</button>
+    <button class="nav-btn" (click)="navigateNext()" title="Next Document">Next &#9654;</button>
+  </div>
+
+  <div class="file-list" cdkDropList (cdkDropListDropped)="onDrop($event)">
+    <div *ngFor="let file of files"
+         class="file-item"
+         cdkDrag
+         [class.selected]="file._id === selectedFileId"
+         [class.checked]="selectedIds.has(file._id)"
+         (click)="selectFile(file)">
+
+      <input *ngIf="multiSelectMode" type="checkbox"
+             [checked]="selectedIds.has(file._id)"
+             (change)="toggleSelection(file._id)"
+             (click)="$event.stopPropagation()" />
+
+      <span class="file-icon" [innerHTML]="getFileIcon(file.type)"></span>
+
+      <div class="file-info">
+        <span class="file-name">{{ file.displayName }}</span>
+        <span class="file-meta">
+          {{ file.type | uppercase }} &middot; {{ formatSize(file.size) }}
+          <span *ngIf="file.pageCount > 1"> &middot; {{ file.pageCount }} pages</span>
+        </span>
+      </div>
+
+      <button class="delete-btn" (click)="deleteFile(file, $event)" title="Delete"
+              *ngIf="!multiSelectMode">&#128465;</button>
+
+      <div class="drag-handle" cdkDragHandle>&#8942;&#8942;</div>
+    </div>
+  </div>
+
+  <div *ngIf="files.length === 0" class="empty-state">
+    <p>No documents found.</p>
+    <p class="hint">Place PDF, TIFF, or JPG files in the server/assets/ folder and click refresh.</p>
+  </div>
+</div>
