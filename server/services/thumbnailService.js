@@ -1,30 +1,54 @@
-const sharp = require('sharp');
+let sharp;
+try {
+  sharp = require('sharp');
+} catch {
+  console.warn('[thumbnailService] sharp not available -- using Jimp fallback');
+}
+
+const Jimp = require('jimp');
 const path = require('path');
 const fs = require('fs');
 
 const THUMB_WIDTH = 200;
 
 async function generateImageThumbnail(filePath) {
-  const buffer = await sharp(filePath)
-    .resize(THUMB_WIDTH)
-    .jpeg({ quality: 70 })
-    .toBuffer();
-  return buffer;
-}
-
-async function generateTiffThumbnail(filePath, pageIndex = 0) {
-  try {
-    const buffer = await sharp(filePath, { page: pageIndex })
+  if (sharp) {
+    const buffer = await sharp(filePath)
       .resize(THUMB_WIDTH)
       .jpeg({ quality: 70 })
       .toBuffer();
     return buffer;
+  }
+
+  const image = await Jimp.read(filePath);
+  image.resize(THUMB_WIDTH, Jimp.AUTO).quality(70);
+  return image.getBufferAsync(Jimp.MIME_JPEG);
+}
+
+async function generateTiffThumbnail(filePath, pageIndex = 0) {
+  if (sharp) {
+    try {
+      const buffer = await sharp(filePath, { page: pageIndex })
+        .resize(THUMB_WIDTH)
+        .jpeg({ quality: 70 })
+        .toBuffer();
+      return buffer;
+    } catch {
+      return generateImageThumbnail(filePath);
+    }
+  }
+
+  try {
+    const image = await Jimp.read(filePath);
+    image.resize(THUMB_WIDTH, Jimp.AUTO).quality(70);
+    return image.getBufferAsync(Jimp.MIME_JPEG);
   } catch {
-    return generateImageThumbnail(filePath);
+    return null;
   }
 }
 
 async function getTiffPageCount(filePath) {
+  if (!sharp) return 1;
   try {
     const metadata = await sharp(filePath).metadata();
     return metadata.pages || 1;

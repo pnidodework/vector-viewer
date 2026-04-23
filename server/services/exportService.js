@@ -1,4 +1,11 @@
-const sharp = require('sharp');
+let sharp;
+try {
+  sharp = require('sharp');
+} catch {
+  console.warn('[exportService] sharp not available -- using Jimp fallback where possible');
+}
+
+const Jimp = require('jimp');
 const fs = require('fs');
 const path = require('path');
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
@@ -78,6 +85,7 @@ function escapeXml(str) {
 
 async function compositeAnnotations(baseBuffer, annotations, width, height) {
   if (!annotations || annotations.length === 0) return baseBuffer;
+  if (!sharp) return baseBuffer;
 
   const svgString = buildAnnotationSvg(annotations, width, height);
   const svgBuffer = Buffer.from(svgString);
@@ -89,19 +97,27 @@ async function compositeAnnotations(baseBuffer, annotations, width, height) {
 }
 
 async function exportToJpg(filePath, fileId, quality = 80) {
-  const annotations = annotationsStore.getAll((a) => a.fileId === fileId);
-  const metadata = await sharp(filePath).metadata();
-  const w = metadata.width || 800;
-  const h = metadata.height || 600;
+  if (sharp) {
+    const annotations = annotationsStore.getAll((a) => a.fileId === fileId);
+    const metadata = await sharp(filePath).metadata();
+    const w = metadata.width || 800;
+    const h = metadata.height || 600;
 
-  let buffer = await sharp(filePath).png().toBuffer();
-  buffer = await compositeAnnotations(buffer, annotations, w, h);
-  buffer = await sharp(buffer).jpeg({ quality }).toBuffer();
+    let buffer = await sharp(filePath).png().toBuffer();
+    buffer = await compositeAnnotations(buffer, annotations, w, h);
+    buffer = await sharp(buffer).jpeg({ quality }).toBuffer();
 
+    return { buffer, mimeType: 'image/jpeg', extension: 'jpg' };
+  }
+
+  const image = await Jimp.read(filePath);
+  image.quality(quality);
+  const buffer = await image.getBufferAsync(Jimp.MIME_JPEG);
   return { buffer, mimeType: 'image/jpeg', extension: 'jpg' };
 }
 
 async function exportToTiff(filePath, fileId, quality = 80) {
+  if (!sharp) throw new Error('TIFF export requires sharp which is not installed');
   const annotations = annotationsStore.getAll((a) => a.fileId === fileId);
   const metadata = await sharp(filePath).metadata();
   const w = metadata.width || 800;
@@ -142,8 +158,12 @@ async function exportToPdf(filePath, fileType, fileId) {
   let image;
   if (fileType === 'jpg') {
     image = await pdfDoc.embedJpg(imageBytes);
-  } else {
+  } else if (sharp) {
     const pngBuffer = await sharp(filePath).png().toBuffer();
+    image = await pdfDoc.embedPng(pngBuffer);
+  } else {
+    const jimpImage = await Jimp.read(filePath);
+    const pngBuffer = await jimpImage.getBufferAsync(Jimp.MIME_PNG);
     image = await pdfDoc.embedPng(pngBuffer);
   }
 
