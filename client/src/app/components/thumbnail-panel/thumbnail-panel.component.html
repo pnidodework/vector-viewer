@@ -4,7 +4,7 @@
     <span class="page-count">{{ pages.length }}</span>
   </div>
 
-  <div class="thumbnail-list">
+  <div class="thumbnail-list" #thumbnailList>
     <div *ngFor="let page of pages"
          class="thumbnail-item"
          [class.active]="page === currentPage"

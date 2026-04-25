@@ -20,6 +20,7 @@ declare const pdfjsLib: any;
   styleUrls: ['./viewer.component.css'],
 })
 export class ViewerComponent implements OnInit, OnDestroy, AfterViewInit {
+  @ViewChild('viewerContainer', { static: false }) containerRef!: ElementRef<HTMLElement>;
   @ViewChild('viewerCanvas', { static: false }) canvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('annotationSvg', { static: false }) svgRef!: ElementRef<SVGSVGElement>;
 
@@ -48,6 +49,11 @@ export class ViewerComponent implements OnInit, OnDestroy, AfterViewInit {
   private panStartY = 0;
   private panOffsetX = 0;
   private panOffsetY = 0;
+
+  // Scroll-based page navigation
+  private lastPageChangeTime = 0;
+  private readonly PAGE_CHANGE_COOLDOWN = 500;
+  isPageTransitioning = false;
 
   // Drawing state
   isDrawing = false;
@@ -487,6 +493,41 @@ export class ViewerComponent implements OnInit, OnDestroy, AfterViewInit {
 
   getArrowMarkerUrl(): string {
     return 'url(#arrowhead)';
+  }
+
+  onWheel(event: WheelEvent): void {
+    if (!this.currentFile || this.currentFile.pageCount <= 1) return;
+    if (this.isPageTransitioning) return;
+
+    const container = this.containerRef?.nativeElement;
+    if (!container) return;
+
+    const now = Date.now();
+    if (now - this.lastPageChangeTime < this.PAGE_CHANGE_COOLDOWN) return;
+
+    const atBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 2;
+    const atTop = container.scrollTop <= 1;
+
+    let nextPage = 0;
+    if (event.deltaY > 0 && atBottom && this.currentPage < this.currentFile.pageCount) {
+      nextPage = this.currentPage + 1;
+    } else if (event.deltaY < 0 && atTop && this.currentPage > 1) {
+      nextPage = this.currentPage - 1;
+    }
+
+    if (!nextPage) return;
+
+    event.preventDefault();
+    this.lastPageChangeTime = now;
+    this.isPageTransitioning = true;
+
+    setTimeout(() => {
+      this.viewerState.setCurrentPage(nextPage);
+      container.scrollTop = nextPage > this.currentPage ? container.scrollHeight : 0;
+      setTimeout(() => {
+        this.isPageTransitioning = false;
+      }, 200);
+    }, 100);
   }
 
   @HostListener('window:keydown', ['$event'])

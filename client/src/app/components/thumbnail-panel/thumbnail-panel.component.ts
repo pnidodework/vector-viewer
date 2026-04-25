@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnDestroy, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ViewerStateService, PageSelectedEvent } from '../../services/viewer-state.service';
 import { FileService } from '../../services/file.service';
@@ -14,6 +14,7 @@ const THUMB_SCALE = 0.3;
   styleUrls: ['./thumbnail-panel.component.css'],
 })
 export class ThumbnailPanelComponent implements OnInit, OnDestroy {
+  @ViewChild('thumbnailList') thumbnailList!: ElementRef<HTMLElement>;
   @Output() pageSelected = new EventEmitter<PageSelectedEvent>();
 
   currentFile: FileInfo | null = null;
@@ -39,7 +40,10 @@ export class ThumbnailPanelComponent implements OnInit, OnDestroy {
           this.loadPdfThumbnails(file);
         }
       }),
-      this.viewerState.currentPage$.subscribe((p) => (this.currentPage = p))
+      this.viewerState.currentPage$.subscribe((p) => {
+        this.currentPage = p;
+        this.scrollToActiveThumbnail();
+      })
     );
   }
 
@@ -68,6 +72,17 @@ export class ThumbnailPanelComponent implements OnInit, OnDestroy {
 
   getPdfThumbUrl(page: number): string | null {
     return this.pdfThumbnails.get(page) || null;
+  }
+
+  private scrollToActiveThumbnail(): void {
+    setTimeout(() => {
+      const list = this.thumbnailList?.nativeElement;
+      if (!list) return;
+      const item = list.querySelector('.thumbnail-item.active') as HTMLElement;
+      if (item) {
+        item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
   }
 
   private async loadPdfThumbnails(file: FileInfo): Promise<void> {

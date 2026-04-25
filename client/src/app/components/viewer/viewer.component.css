@@ -1,8 +1,16 @@
+:host {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .viewer-container {
   flex: 1;
   overflow: auto;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   background: #e0e0e0;
   position: relative;
@@ -11,8 +19,14 @@
 .viewer-wrapper {
   position: relative;
   transform-origin: center center;
-  transition: filter 0.2s ease;
+  transition: filter 0.2s ease, opacity 0.15s ease;
   line-height: 0;
+  margin: auto;
+  opacity: 1;
+}
+
+.viewer-wrapper.page-transitioning {
+  opacity: 0;
 }
 
 .viewer-wrapper canvas {

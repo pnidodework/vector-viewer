@@ -1,5 +1,7 @@
-<div class="viewer-container" *ngIf="currentFile; else noFile">
+<div class="viewer-container" #viewerContainer *ngIf="currentFile; else noFile"
+     (wheel)="onWheel($event)">
   <div class="viewer-wrapper"
+       [class.page-transitioning]="isPageTransitioning"
        [style.transform]="transformStyle"
        [style.filter]="filterStyle"
        (mousedown)="onMouseDown($event)"
