@@ -509,9 +509,11 @@ export class ViewerComponent implements OnInit, OnDestroy, AfterViewInit {
     const atTop = container.scrollTop <= 1;
 
     let nextPage = 0;
-    if (event.deltaY > 0 && atBottom && this.currentPage < this.currentFile.pageCount) {
+    const goingForward = event.deltaY > 0;
+
+    if (goingForward && atBottom && this.currentPage < this.currentFile.pageCount) {
       nextPage = this.currentPage + 1;
-    } else if (event.deltaY < 0 && atTop && this.currentPage > 1) {
+    } else if (!goingForward && atTop && this.currentPage > 1) {
       nextPage = this.currentPage - 1;
     }
 
@@ -521,13 +523,12 @@ export class ViewerComponent implements OnInit, OnDestroy, AfterViewInit {
     this.lastPageChangeTime = now;
     this.isPageTransitioning = true;
 
+    this.viewerState.setCurrentPage(nextPage);
+    container.scrollTop = 0;
+
     setTimeout(() => {
-      this.viewerState.setCurrentPage(nextPage);
-      container.scrollTop = nextPage > this.currentPage ? container.scrollHeight : 0;
-      setTimeout(() => {
-        this.isPageTransitioning = false;
-      }, 200);
-    }, 100);
+      this.isPageTransitioning = false;
+    }, 300);
   }
 
   @HostListener('window:keydown', ['$event'])
