@@ -1,0 +1,19 @@
+<div class="app-layout">
+  <app-document-list></app-document-list>
+
+  <div class="center-panel">
+    <app-toolbar
+      (openExportDialog)="openExportDialog()"
+      (openCrossRefDialog)="openCrossRefDialog()">
+    </app-toolbar>
+
+    <app-viewer></app-viewer>
+
+    <app-pagination></app-pagination>
+  </div>
+
+  <app-thumbnail-panel (pageSelected)="onPageSelected($event)"></app-thumbnail-panel>
+</div>
+
+<app-export-dialog [(visible)]="showExportDialog"></app-export-dialog>
+<app-cross-ref-dialog [(visible)]="showCrossRefDialog"></app-cross-ref-dialog>
